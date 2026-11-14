@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CODA mouse lung: 150 serial sections to a 3D volume</title>
+<meta name="description" content="The CODA histology pipeline run end to end on 150 serial sections of a mouse lung, and the rendering bug that made it look like a stack of plates.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  /* neutrals are tinted toward the crimson accent, chroma well under .02 */
+  --ink-900:#0c0a0d;
+  --ink-800:#131016;
+  --ink-700:#1a161d;
+  --ink-600:#241f29;
+  --ink-500:#332c39;
+  --ink-400:#4a4150;
+
+  --text-100:#f2eef4;
+  --text-300:#b9b1bf;
+  --text-500:#8a8091;
+  --text-700:#635a6a;
+
+  /* the two colours come from the classifier's own class palette */
+  --vessel:#ff2f5e;      /* vasculature  */
+  --vessel-dim:#b81f43;
+  --airway:#f2a03c;      /* bronchioles  */
+  --airway-dim:#a86c22;
+  --parenchyma:#5b7be0;  /* alveoli      */
+  --ok:#4bbd7a;
+  --warn:#e0a13c;
+
+  --measure:66ch;
+  --gap-1:4px;
+  --gap-4:16px;
+  --gap-9:36px;
+  --radius:3px;
+
+  --font-sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ink-900);
+  color:var(--text-100);
+  font-family:var(--font-sans);
+  font-size:17px;
+  line-height:1.6;
+  letter-spacing:.006em;      /* light-on-dark reads thinner */
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+@media (min-width:900px){ body{font-size:18px} }
+
+img,video{display:block;max-width:100%;height:auto}
+a{color:inherit}
+h1,h2,h3{margin:0;line-height:1.18;font-weight:600;letter-spacing:-.018em}
+p{margin:0}
+code,kbd,samp{font-family:var(--font-mono);font-size:.9em}
+
+:focus-visible{
+  outline:2px dashed var(--vessel);
+  outline-offset:3px;
+  border-radius:2px;
+}
+::selection{background:var(--vessel);color:#fff}
+
+.skip{
+  position:absolute;left:-9999px;top:0;z-index:100;
+  background:var(--vessel);color:#fff;padding:12px 18px;font-weight:600;
+}
+.skip:focus{left:12px;top:12px}
+
+.wrap{width:min(1180px,100% - 40px);margin-inline:auto}
+.wrap--narrow{width:min(760px,100% - 40px);margin-inline:auto}
+
+/* ---------------------------------------------------------------- header */
+.masthead{
+  border-bottom:1px solid var(--ink-600);
+  padding:clamp(56px,9vw,120px) 0 clamp(40px,6vw,72px);
+  position:relative;
+  overflow:hidden;
+}
+.masthead::after{
+  /* soft crimson glow, the one atmospheric move, tied to the vessel class */
+  content:"";
+  position:absolute;inset:auto -20% -60% -20%;height:420px;
+  background:radial-gradient(50% 100% at 50% 100%,rgba(255,47,94,.16),transparent 72%);
+  pointer-events:none;
+}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  color:var(--vessel);
+  margin-bottom:var(--gap-4);
+}
+h1{
+  font-size:clamp(2rem,6vw,3.6rem);
+  max-width:20ch;
+}
+h1 em{
+  font-style:normal;
+  color:var(--vessel);
+}
+.lede{
+  margin-top:var(--gap-4);
+  max-width:var(--measure);
+  font-size:clamp(1.05rem,2.1vw,1.25rem);
+  color:var(--text-300);
+  line-height:1.55;
+}
+.lede strong{color:var(--text-100);font-weight:600}
+
+/* facts strip */
+.facts{
+  margin-top:clamp(36px,5vw,56px);
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;
+  background:var(--ink-600);
+  border:1px solid var(--ink-600);
+}
+.fact{background:var(--ink-800);padding:var(--gap-4) 18px}
+.fact dt{
+  font-family:var(--font-mono);
+  font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--text-500);
+}
+.fact dd{
+  margin:6px 0 0;
+  font-family:var(--font-mono);
+  font-weight:600;
+  font-size:1.02rem;
+  color:var(--text-100);
+  font-variant-numeric:tabular-nums;
+}
+.fact dd span{color:var(--text-500);font-weight:400;font-size:.86em}
+
+/* ---------------------------------------------------------------- layout */
+main{display:block}
+section{padding:clamp(48px,7vw,88px) 0;border-bottom:1px solid var(--ink-700)}
+section:last-of-type{border-bottom:0}
+
+.sec-head{margin-bottom:clamp(28px,4vw,44px)}
+.sec-num{
+  font-family:var(--font-mono);
+  font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-500);
+  display:block;margin-bottom:10px;
+}
+h2{font-size:clamp(1.45rem,3.4vw,2.05rem);max-width:26ch}
+.sec-head p{margin-top:var(--gap-4);max-width:var(--measure);color:var(--text-300)}
+
+/* ---------------------------------------------------------------- pipeline */
+.stages{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink-600)}
+.stage{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:var(--gap-4);
+  padding:22px 0;
+  border-bottom:1px solid var(--ink-600);
+}
+@media (min-width:820px){
+  .stage{grid-template-columns:210px 1fr 150px;gap:var(--gap-9);align-items:baseline}
+}
+.stage__id{font-family:var(--font-mono);font-size:.9rem;color:var(--vessel)}
+.stage__id b{display:block;color:var(--text-100);font-weight:600;letter-spacing:-.01em}
+.stage__id span{color:var(--text-500);font-size:.8rem}
+.stage__body h3{font-size:1.02rem;margin-bottom:6px}
+.stage__body p{color:var(--text-300);font-size:.96rem;max-width:60ch}
+.stage__meta{
+  font-family:var(--font-mono);font-size:.82rem;
+  color:var(--text-500);font-variant-numeric:tabular-nums;
+}
+@media (min-width:820px){ .stage__meta{text-align:right} }
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);font-size:.74rem;
+  padding:3px 9px;border:1px solid var(--ink-400);color:var(--text-300);
+}
+.badge--done{border-color:rgba(75,189,122,.5);color:var(--ok)}
+.badge::before{content:"";width:6px;height:6px;background:currentColor}
+
+/* ---------------------------------------------------------------- gallery */
+.gallery{
+  display:grid;gap:var(--gap-4);
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+}
+figure{margin:0}
+.shot{
+  background:var(--ink-800);
+  border:1px solid var(--ink-600);
+  overflow:hidden;
+}
+.shot img{width:100%;height:auto;background:#000;display:block}
+figcaption{
+  margin-top:10px;font-size:.88rem;color:var(--text-500);line-height:1.45;
+}
+figcaption b{color:var(--text-300);font-weight:600;display:block;font-family:var(--font-mono);font-size:.82rem}
+
+/* video */
+.reel{margin-top:var(--gap-9)}
+.videobox{background:#000;border:1px solid var(--ink-600)}
+.videobox video{width:100%;display:block;background:#000}
+.videofall{
+  display:flex;flex-wrap:wrap;gap:var(--gap-4);
+  align-items:center;justify-content:space-between;
+  padding:12px 16px;background:var(--ink-800);
+  border:1px solid var(--ink-600);border-top:0;
+  font-family:var(--font-mono);font-size:.8rem;color:var(--text-500);
+}
+.videofall a{color:var(--airway);text-decoration:underline;text-underline-offset:3px}
+
+/* ---------------------------------------------------------------- compare */
+.compare{
+  display:grid;gap:1px;background:var(--ink-600);
+  border:1px solid var(--ink-600);
+}
+@media (min-width:760px){ .compare{grid-template-columns:1fr 1fr} }
+.pane{background:var(--ink-800);padding:0 0 18px}
+.pane__tag{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 16px;font-family:var(--font-mono);font-size:.76rem;
+  letter-spacing:.1em;text-transform:uppercase;
+  border-bottom:1px solid var(--ink-600);
+}
+.pane__tag--old{color:var(--text-500)}
+.pane__tag--new{color:var(--vessel)}
+.pane img{width:100%;height:auto;background:#000;display:block}
+.pane p{padding:16px 16px 0;font-size:.9rem;color:var(--text-300)}
+
+.score{
+  display:inline-flex;align-items:baseline;gap:6px;
+  font-family:var(--font-mono);font-variant-numeric:tabular-nums;
+}
+.score b{font-size:1.05rem;font-weight:600}
+.score--old b{color:var(--text-500)}
+.score--new b{color:var(--vessel)}
+
+/* bug list */
+.bugs{list-style:none;margin:0;padding:0;display:grid;gap:1px;background:var(--ink-600);border:1px solid var(--ink-600)}
+@media (min-width:760px){ .bugs{grid-template-columns:1fr 1fr} }
+.bug{background:var(--ink-800);padding:20px}
+.bug__n{
+  font-family:var(--font-mono);font-size:.78rem;color:var(--text-700);
+  display:block;margin-bottom:8px;
+}
+.bug h3{font-size:.98rem;margin-bottom:8px}
+.bug p{font-size:.92rem;color:var(--text-300)}
+.bug p + p{margin-top:10px}
+.bug--lead{background:var(--ink-700);box-shadow:inset 3px 0 0 var(--vessel)}
+@media (min-width:760px){ .bug--lead{grid-column:1 / -1} }
+.tag{
+  display:inline-block;font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--airway);border:1px solid var(--airway-dim);
+  padding:1px 7px;margin-bottom:10px;
+}
+
+/* ---------------------------------------------------------------- table */
+.tblwrap{overflow-x:auto;border:1px solid var(--ink-600);background:var(--ink-800)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-variant-numeric:tabular-nums}
+caption{
+  caption-side:top;text-align:left;padding:14px 16px;
+  font-family:var(--font-mono);font-size:.78rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-500);
+  border-bottom:1px solid var(--ink-600);
+}
+th,td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--ink-700);font-size:.92rem}
+th{
+  font-family:var(--font-mono);font-weight:500;font-size:.76rem;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--text-500);
+  white-space:nowrap;
+}
+td.num{text-align:right;font-family:var(--font-mono);font-size:.88rem}
+tbody tr:last-child td{border-bottom:0}
+tfoot td{font-weight:600;border-top:1px solid var(--ink-500)}
+.swatch{display:inline-block;width:9px;height:9px;margin-right:9px;vertical-align:baseline}
+tr.is-emph td{background:rgba(255,47,94,.06)}
+tr.is-emph td:first-child{box-shadow:inset 2px 0 0 var(--vessel)}
+
+/* ---------------------------------------------------------------- limits */
+.callout{
+  border:1px solid var(--ink-500);
+  box-shadow:inset 3px 0 0 var(--warn);
+  background:var(--ink-800);
+  padding:clamp(20px,3vw,30px);
+}
+.callout h3{font-size:1.05rem;margin-bottom:10px}
+.callout p{color:var(--text-300);max-width:var(--measure);font-size:.95rem}
+.callout p + p{margin-top:12px}
+.bar{
+  margin-top:22px;height:34px;border:1px solid var(--ink-500);
+  position:relative;background:var(--ink-900);
+}
+.bar__fill{
+  position:absolute;inset:0 auto 0 0;width:13.8%;
+  background:linear-gradient(90deg,var(--vessel-dim),var(--vessel));
+}
+.bar__label{
+  position:absolute;inset:0;display:flex;align-items:center;
+  padding-left:calc(13.8% + 12px);
+  font-family:var(--font-mono);font-size:.82rem;color:var(--text-300);
+}
+
+/* ---------------------------------------------------------------- footer */
+footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
+.repro{
+  background:var(--ink-800);border:1px solid var(--ink-600);
+  padding:20px;overflow-x:auto;
+}
+.repro pre{margin:0;font-family:var(--font-mono);font-size:.82rem;line-height:1.75;color:var(--text-300)}
+.repro .c{color:var(--text-700)}
+.repro .k{color:var(--airway)}
+.foot-note{
+  margin-top:28px;display:flex;flex-wrap:wrap;gap:var(--gap-4) var(--gap-9);
+  justify-content:space-between;align-items:baseline;
+  font-size:.86rem;color:var(--text-500);
+}
+.foot-note a{color:var(--vessel);text-decoration:underline;text-underline-offset:3px}
+
+/* ---------------------------------------------------------------- motion */
+[data-reveal]{
+  opacity:0;
+  transform:translateY(14px);
+  transition:opacity .5s cubic-bezier(.16,1,.3,1),
+             transform .5s cubic-bezier(.16,1,.3,1);
+}
+[data-reveal].is-in{opacity:1;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+  [data-reveal]{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+@media (prefers-reduced-motion:no-preference){
+  html{scroll-behavior:smooth}
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">CODA pipeline / mouse lung</p>
+    <h1>150 serial sections, reconstructed into a <em>3D label volume</em></h1>
+    <p class="lede">
+      The original CODA histology pipeline, run end to end on every section of the mouse lung
+      dataset. Nothing here is synthetic: each voxel is the classifier's output on a real
+      section. The second half of this page covers a rendering bug that made the result look
+      like a <strong>stack of plates</strong>, and what it took to fix.
+    </p>
+
+    <dl class="facts">
+      <div class="fact"><dt>sections</dt><dd>150 <span>x 10 µm</span></dd></div>
+      <div class="fact"><dt>volume grid</dt><dd>2983 × 2497 × 150</dd></div>
+      <div class="fact"><dt>voxels</dt><dd>1.117 <span>billion</span></dd></div>
+      <div class="fact"><dt>physical size</dt><dd>11.93 × 9.99 × 1.50 <span>mm</span></dd></div>
+      <div class="fact"><dt>volume</dt><dd>0.179 <span>cm³</span></dd></div>
+      <div class="fact"><dt>of a mouse lung</dt><dd>13.8 <span>%</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============================================================ pipeline -->
+<section aria-labelledby="s-pipeline">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <span class="sec-num">01 / pipeline</span>
+      <h2>Five stages, run in order on the GPU server</h2>
+      <p>
+        Parameters are the tutorial's own throughout. Section 4 trains on the annotation set,
+        4.5 applies that model to every slice, and 5 and 6 warp the result into a shared
+        coordinate frame and stack it into a volume.
+      </p>
+    </div>
+
+    <ol class="stages" data-reveal>
+      <li class="stage">
+        <div class="stage__id"><b>Section 3</b><span>tissue masks + registration</span></div>
+        <div class="stage__body">
+          <h3>Segmentation of tissue and pairwise alignment</h3>
+          <p>
+            One tissue mask per section, then a global affine plus an elastic warp between
+            every consecutive pair so the stack is physically coherent before anything is
+            classified.
+          </p>
+        </div>
+        <div class="stage__meta">
+          <span class="badge badge--done">done</span><br>
+          150 masks<br>150 warps + 150 fields
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="stage__id"><b>Section 4</b><span>train the classifier</span></div>
+        <div class="stage__body">
+          <h3>DeepLabv3+ / ResNet-50, 8 epochs</h3>
+          <p>
+            Trained on 1500 tiles cut from 5 annotated sections, on the raw class counts as
+            sample weights. Learning rate 0.0005 decaying by 0.75 each epoch. Final validation
+            loss 0.02596.
+          </p>
+        </div>
+        <div class="stage__meta">
+          <span class="badge badge--done">done</span><br>
+          1.14 s / iteration<br>on GPU
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="stage__id"><b>Section 4.5</b><span>apply to all 150</span></div>
+        <div class="stage__body">
+          <h3>Classify every slice at full resolution</h3>
+          <p>
+            Each 9330 × 9950 image is tiled at 1000 px and run through the network, with tiles
+            that contain no tissue skipped before inference.
+          </p>
+        </div>
+        <div class="stage__meta">
+          <span class="badge badge--done">done</span><br>
+          87 min total<br>≈ 30 s per slice
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="stage__id"><b>Section 5</b><span>warp to a shared frame</span></div>
+        <div class="stage__body">
+          <h3>Apply the Section 3 warps to the classified images</h3>
+          <p>
+            The section-to-section transforms were computed on the low resolution images, so
+            they are scaled up by 10 and applied to the 1 µm classified output.
+          </p>
+        </div>
+        <div class="stage__meta">
+          <span class="badge badge--done">done</span><br>
+          150 / 150<br>≈ 7 s per image
+        </div>
+      </li>
+
+      <li class="stage">
+        <div class="stage__id"><b>Section 6</b><span>build the volume</span></div>
+        <div class="stage__body">
+          <h3>Downsample and stack into a label volume</h3>
+          <p>
+            In-plane downsampling of 4 gives 4 µm pixels; the section spacing stays at 10 µm,
+            so the finished voxel is 4 × 4 × 10 µm. The stack is cropped to the tissue.
+          </p>
+        </div>
+        <div class="stage__meta">
+          <span class="badge badge--done">done</span><br>
+          59 MB volume.mat<br>7 classes
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================================================ results -->
+<section aria-labelledby="s-results">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <span class="sec-num">02 / result</span>
+      <h2>The corrected reconstruction</h2>
+      <p>
+        Volume ray marching, emission and absorption, parallel projection. The colours are the
+        classifier's own class palette: <span style="color:var(--vessel)">magenta is
+        vasculature</span>, <span style="color:var(--airway)">amber is bronchioles</span>, and
+        the pale blue haze is alveolar parenchyma.
+      </p>
+    </div>
+
+    <div class="gallery" data-reveal>
+      <figure>
+        <div class="shot"><img src="assets/new/hero.png" alt="Three-quarter view of the reconstructed mouse lung volume, showing a magenta vessel tree and an amber airway tree inside a translucent blue-grey parenchyma. A provenance band below the render states that all classes come from the 150 real sections." loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>hero</b>Three-quarter view. Both trees visible against the parenchyma.</figcaption>
+      </figure>
+      <figure>
+        <div class="shot"><img src="assets/new/oblique.png" alt="Raised oblique view of the same volume, with the provenance band below." loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>oblique</b>Raised oblique, full footprint in frame.</figcaption>
+      </figure>
+      <figure>
+        <div class="shot"><img src="assets/new/front.png" alt="Frontal view of the volume, with the provenance band below." loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>front</b>Frontal.</figcaption>
+      </figure>
+      <figure>
+        <div class="shot"><img src="assets/new/top.png" alt="View looking down onto the stack of sections, with the provenance band below." loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>top</b>Looking down onto the section stack.</figcaption>
+      </figure>
+    </div>
+
+    <div class="reel" data-reveal>
+      <div class="videobox">
+        <video controls muted loop playsinline preload="metadata"
+               poster="assets/new/hero.png"
+               aria-label="Turntable of the reconstructed mouse lung volume">
+          <source src="assets/video/new-turntable.mp4" type="video/mp4">
+          Your browser cannot play this video.
+          <a href="assets/video/new-turntable.gif">Open the animated GIF instead</a>.
+        </video>
+      </div>
+      <p class="videofall">
+        <span>40 frames, 20 fps, one full rotation</span>
+        <span><a href="assets/video/new-turntable.gif">GIF fallback</a> · <a href="assets/video/new-turntable.mp4" download>Download MP4</a></span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ provenance -->
+<section aria-labelledby="s-prov">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <span class="sec-num">03 / provenance</span>
+      <h2>What in those images comes from the slice data</h2>
+      <p>
+        Everything in the render is classifier output on the real sections. That is not obvious
+        from looking at it, and two things that are <em>not</em> measurements can easily be read
+        as if they were. The table separates the three cases.
+      </p>
+    </div>
+
+    <div class="tblwrap" data-reveal>
+      <table>
+        <caption>Provenance of every element in the 3D result</caption>
+        <thead>
+          <tr>
+            <th scope="col">Element in the render</th>
+            <th scope="col">Where it comes from</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vasculature, magenta</td>
+            <td>Class 3, classifier output on the 150 sections</td>
+            <td><span class="badge badge--done">data</span></td>
+          </tr>
+          <tr>
+            <td>Bronchioles, amber</td>
+            <td>Class 1, same source</td>
+            <td><span class="badge badge--done">data</span></td>
+          </tr>
+          <tr>
+            <td>Alveoli, stroma, nonexpanded, cancer, background</td>
+            <td>Classes 2, 7, 5, 4, 6</td>
+            <td><span class="badge badge--done">data</span></td>
+          </tr>
+          <tr>
+            <td>Outer silhouette</td>
+            <td>The tissue mask of each individual section</td>
+            <td><span class="badge badge--done">data</span></td>
+          </tr>
+          <tr>
+            <td>1.5 mm thickness</td>
+            <td>150 sections at their real 10 µm spacing</td>
+            <td><span class="badge badge--done">data</span></td>
+          </tr>
+          <tr class="is-emph">
+            <td>Apparent calibre of vessels and airways</td>
+            <td>Widened by the renderer's emission. The labelled structures are 1 to 2 voxels thick in the data, so the rendered width is not a diameter</td>
+            <td><span class="badge">presentation</span></td>
+          </tr>
+          <tr>
+            <td>Colour, glow strength, opacity</td>
+            <td>Display parameters chosen by hand</td>
+            <td><span class="badge">presentation</span></td>
+          </tr>
+          <tr class="is-emph">
+            <td>590,000 removed voxels</td>
+            <td>Despeckle filter on isolated components below 250 voxels</td>
+            <td><span class="badge">processing</span></td>
+          </tr>
+          <tr>
+            <td>12 µm in-plane grid</td>
+            <td>Display resampling, smoother than the raw 4 µm grid</td>
+            <td><span class="badge">processing</span></td>
+          </tr>
+          <tr>
+            <td>Anatomy that is not the specimen</td>
+            <td>No reference anatomy and no other animal appears in any render on this page</td>
+            <td><span class="badge badge--done">excluded</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout" style="margin-top:var(--gap-9)" data-reveal>
+      <h3>Deliberately kept out</h3>
+      <p>
+        Three assets in this project are not the specimen and would be misleading inside a
+        reconstruction. They exist, they are useful for other purposes, and none of them is
+        used above.
+      </p>
+      <p>
+        <code>LUNG_anatomical.glb</code> is a human lung from the BodyParts3D atlas, which is
+        the wrong species. <code>MOUSE_lung.glb</code> is a set of procedural lobes built from
+        sphere primitives, so the shape is invented rather than imaged.
+        <code>lapd_m07/</code> is the lapdMouse archive of a different mouse, a C57BL/6 male of
+        24.1 g, with its own airway tree, and it can be compared against this reconstruction but
+        not merged into it.
+      </p>
+      <p>
+        If any of those ever appear in a figure beside this volume, they need a label saying
+        which one is the measurement and which is a reference.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ compare -->
+<section aria-labelledby="s-compare">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <span class="sec-num">04 / old vs new</span>
+      <h2>Same data, same classifier. One number was wrong</h2>
+      <p>
+        Both of these are the identical 1.117 billion voxel volume. The only difference is how
+        the renderer mapped it into space. On the left, z is stretched about eight times; on the
+        right, each axis carries its real physical extent.
+      </p>
+    </div>
+
+    <div class="compare" data-reveal>
+      <div class="pane">
+        <div class="pane__tag">
+          <span class="pane__tag--old">Before</span>
+          <span class="score score--old">smoothness <b>4</b>/10</span>
+        </div>
+        <img src="assets/old/hero.png" alt="Earlier render with visible horizontal plate stacking across the tissue surface." loading="lazy" width="1000" height="1000">
+        <p>
+          The surface reads as a stack of horizontal plates. A 1.5 mm slab was being drawn as a
+          thick block, so the 150 sections became visible edges.
+        </p>
+      </div>
+      <div class="pane">
+        <div class="pane__tag">
+          <span class="pane__tag--new">After</span>
+          <span class="score score--new">smoothness <b>8</b>/10</span>
+        </div>
+        <img src="assets/new/hero.png" alt="Corrected render with a continuous translucent surface and clearly separated vessel and airway trees, and the provenance band below." loading="lazy" width="1000" height="1434">
+        <p>
+          Continuous surface, no stacking lines, and the branches read as tubes rather than
+          frayed sheets. Vessel and airway trees separate cleanly by colour.
+        </p>
+      </div>
+    </div>
+
+    <div class="reel" data-reveal>
+      <div class="compare">
+        <div class="pane">
+          <div class="pane__tag"><span class="pane__tag--old">Before, turning</span></div>
+          <img src="assets/video/old-turntable.gif" alt="Turntable of the earlier, incorrectly scaled render." loading="lazy">
+        </div>
+        <div class="pane">
+          <div class="pane__tag"><span class="pane__tag--new">After, turning</span></div>
+          <img src="assets/video/new-turntable.gif" alt="Turntable of the corrected render." loading="lazy">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ fixes -->
+<section aria-labelledby="s-fixes">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <span class="sec-num">05 / what was wrong</span>
+      <h2>Five defects, in order of how much they mattered</h2>
+      <p>
+        Only the first one is what people noticed. The rest were each contributing their own
+        artefact on top of it.
+      </p>
+    </div>
+
+    <ul class="bugs" data-reveal>
+      <li class="bug bug--lead">
+        <span class="tag">the dominant one</span>
+        <span class="bug__n">01</span>
+        <h3>The aspect ratio was destroyed by normalisation</h3>
+        <p>
+          The volume is 11.93 × 9.99 × 1.50 mm, but the renderer mapped each axis onto
+          [-0.5, 0.5] independently. That stretches z by roughly eight times and turns a thin
+          slab into a block, which is exactly why the sections showed up as plates.
+        </p>
+        <p>
+          The fix is to scale every axis by its share of the largest physical dimension before
+          converting back to voxel indices.
+        </p>
+      </li>
+
+      <li class="bug">
+        <span class="bug__n">02</span>
+        <h3>The camera was inside the volume</h3>
+        <p>
+          Building the ray direction by normalising a per-pixel vector makes every ray diverge
+          from the origin, which sits inside the data. The first render was a starburst of
+          spokes converging on the centre.
+        </p>
+      </li>
+
+      <li class="bug">
+        <span class="bug__n">03</span>
+        <h3>In-plane sampling was coarser than z</h3>
+        <p>
+          An early version downsampled xy four times to 16 µm while resampling z to 4 µm. That
+          is anisotropy in the opposite direction to the data's own, and it made the lateral
+          detail visibly worse than claimed.
+        </p>
+      </li>
+
+      <li class="bug">
+        <span class="bug__n">04</span>
+        <h3>Parenchyma emission was far too high</h3>
+        <p>
+          A ray crosses about 700 steps, so even a small per-step value accumulates into a white
+          haze that flattens everything inside it. Emission is now near zero on the parenchyma
+          classes and absorption carries the structure instead.
+        </p>
+      </li>
+
+      <li class="bug">
+        <span class="bug__n">05</span>
+        <h3>Single-voxel specks in the background</h3>
+        <p>
+          The classifier scatters isolated one-voxel islands of every class through the empty
+          space. At render time those become hundreds of coloured dots floating in the black.
+          Filtering connected components below 250 voxels removed about 590,000 of them.
+        </p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ table -->
+<section aria-labelledby="s-table">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <span class="sec-num">06 / composition</span>
+      <h2>What the volume is made of</h2>
+      <p>
+        Per-class voxel counts, converted with the true voxel volume
+        <code>0.004 × 0.004 × 0.010 mm³</code>.
+      </p>
+    </div>
+
+    <div class="tblwrap" data-reveal>
+      <table>
+        <caption>Class composition of the 150-section volume</caption>
+        <thead>
+          <tr>
+            <th scope="col">Class</th>
+            <th scope="col" class="num">Voxels</th>
+            <th scope="col" class="num">Volume mm³</th>
+            <th scope="col" class="num">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="swatch" style="background:var(--parenchyma)"></span>Alveoli</td>
+            <td class="num">115,941,596</td><td class="num">18.551</td><td class="num">10.4 %</td>
+          </tr>
+          <tr class="is-emph">
+            <td><span class="swatch" style="background:var(--vessel)"></span>Vasculature</td>
+            <td class="num">1,424,078</td><td class="num">0.228</td><td class="num">0.13 %</td>
+          </tr>
+          <tr class="is-emph">
+            <td><span class="swatch" style="background:var(--airway)"></span>Bronchioles</td>
+            <td class="num">2,088,352</td><td class="num">0.334</td><td class="num">0.19 %</td>
+          </tr>
+          <tr>
+            <td><span class="swatch" style="background:#c4aa3c"></span>Stroma</td>
+            <td class="num">9,317,596</td><td class="num">1.491</td><td class="num">0.83 %</td>
+          </tr>
+          <tr>
+            <td><span class="swatch" style="background:#2a9aa0"></span>Nonexpanded</td>
+            <td class="num">8,122,270</td><td class="num">1.300</td><td class="num">0.73 %</td>
+          </tr>
+          <tr>
+            <td><span class="swatch" style="background:#c2c293"></span>Cancer</td>
+            <td class="num">141,801</td><td class="num">0.023</td><td class="num">0.013 %</td>
+          </tr>
+          <tr>
+            <td><span class="swatch" style="background:var(--ink-500)"></span>Background</td>
+            <td class="num">980,246,957</td><td class="num">156.840</td><td class="num">87.7 %</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td class="num">1,117,282,650</td><td class="num">178.766</td><td class="num">100 %</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ limits -->
+<section aria-labelledby="s-limits">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <span class="sec-num">07 / the honest part</span>
+      <h2>This is a slab, not a whole lung</h2>
+    </div>
+
+    <div class="callout" data-reveal>
+      <h3>1.5 mm of tissue out of a 10 to 20 mm organ</h3>
+      <p>
+        150 sections at 10 µm spacing is 1.5 mm of tissue. A mouse lung is roughly 10 to 20 mm
+        long and about 1.3 cm³ in volume, so this stack samples close to 14 % of the organ. That
+        is a real and representative block, but it is not the whole shape.
+      </p>
+      <p>
+        The consequence is visible in every render: the result reads as a tissue block with a
+        bronchovascular tree inside it, rather than as an anatomically recognisable lung. A
+        whole-lung silhouette would need several hundred more sections. This is a property of
+        the dataset, not of the pipeline.
+      </p>
+      <div class="bar" role="img" aria-label="Bar showing the reconstruction covers 13.8 percent of a mouse lung by volume.">
+        <div class="bar__fill"></div>
+        <div class="bar__label">13.8 % of the organ</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap--narrow">
+    <h2 style="font-size:1.15rem;margin-bottom:20px" data-reveal>Reproducing this</h2>
+    <div class="repro" data-reveal>
+<pre><span class="c"># server: bzhang@10.13.8.200, coda3d_run</span>
+<span class="k">export</span> CUDA_VISIBLE_DEVICES=1
+<span class="k">export</span> LD_LIBRARY_PATH=/home/bzhang/Kludt/cuda-compat-13-4:$LD_LIBRARY_PATH
+
+matlab -batch s_sec4_gpu         <span class="c"># train + test</span>
+matlab -batch s_sec45_classify   <span class="c"># classify all 150</span>
+matlab -batch s_sec56            <span class="c"># registration + volume</span></pre>
+    </div>
+    <p style="margin-top:18px;color:var(--text-300);font-size:.94rem">
+      GPU access needs no root and no reboot. The CUDA forward-compatibility userspace
+      libraries on <code>LD_LIBRARY_PATH</code> are enough for MATLAB R2026b to see the
+      RTX 4090, which cut training from 19.2 s to 1.14 s per iteration.
+    </p>
+
+    <div class="foot-note">
+      <span>CODA: Kiemen et al., <em>Nature Methods</em> 2022</span>
+      <span><a href="https://github.com/kainblue100/">github.com/kainblue100</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var nodes = document.querySelectorAll('[data-reveal]');
+  if (reduce || !('IntersectionObserver' in window)) {
+    nodes.forEach(function(n){ n.classList.add('is-in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e, i){
+      if (!e.isIntersecting) return;
+      var el = e.target;
+      el.style.transitionDelay = (Math.min(i, 4) * 60) + 'ms';
+      el.classList.add('is-in');
+      io.unobserve(el);
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.05 });
+  nodes.forEach(function(n){ io.observe(n); });
+})();
+</script>
+</body>
+</html>

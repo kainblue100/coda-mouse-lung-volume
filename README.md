@@ -4,7 +4,11 @@ The original CODA histology pipeline (Kiemen et al., *Nature Methods* 2022) run 
 all 150 serial sections of the mouse lung dataset, plus the rendering work needed to make the
 result readable.
 
-**Live page:** https://kainblue100.github.io/coda-mouse-lung-3d/
+**Live page:** https://kainblue100.github.io/coda-mouse-lung-volume/
+
+> This repo is separate from `coda-mouse-lung-3d`, which is an earlier version of
+> this project built from Blender mesh renders. This one carries the corrected
+> volume renders, the rendering fix, and the provenance table.
 
 ## What this is
 
@@ -48,6 +52,39 @@ Converted with the true voxel volume, 0.004 × 0.004 × 0.010 mm³.
 | cancer | 141,801 | 0.023 | 0.013 % |
 | background | 980,246,957 | 156.840 | 87.7 % |
 | **total** | **1,117,282,650** | **178.766** | **100 %** |
+
+## Provenance
+
+Everything in the renders is classifier output on the real sections. That is not obvious from
+looking at the images, and two things that are not measurements can easily be read as if they
+were.
+
+| Element in the render | Where it comes from | Status |
+|---|---|---|
+| Vasculature (magenta) | Class 3, classifier output on the 150 sections | data |
+| Bronchioles (amber) | Class 1, same source | data |
+| Alveoli, stroma, nonexpanded, cancer, background | Classes 2, 7, 5, 4, 6 | data |
+| Outer silhouette | The tissue mask of each individual section | data |
+| 1.5 mm thickness | 150 sections at their real 10 µm spacing | data |
+| Apparent calibre of vessels and airways | Widened by the renderer's emission. The labelled structures are 1 to 2 voxels thick in the data, so the rendered width is not a diameter | presentation |
+| Colour, glow strength, opacity | Display parameters chosen by hand | presentation |
+| 590,000 removed voxels | Despeckle filter on isolated components below 250 voxels | processing |
+| 12 µm in-plane grid | Display resampling, smoother than the raw 4 µm grid | processing |
+| Anatomy that is not the specimen | None appears in any render here | excluded |
+
+### Deliberately kept out
+
+Three assets in this project are not the specimen and would be misleading inside a
+reconstruction. None of them is used in any render above.
+
+- `LUNG_anatomical.glb` is a human lung from the BodyParts3D atlas. Wrong species.
+- `MOUSE_lung.glb` is a set of procedural lobes built from sphere primitives. The shape is
+  invented rather than imaged.
+- `lapd_m07/` is the lapdMouse archive of a different mouse, a C57BL/6 male of 24.1 g, with its
+  own airway tree. It can be compared against this reconstruction but not merged into it.
+
+If any of those appear in a figure beside this volume, they need a label saying which one is
+the measurement and which is a reference.
 
 ## The rendering bug
 
@@ -111,10 +148,17 @@ exist.
 
 ```
 index.html                     the page
-assets/new/                    corrected renders
+assets/new/                    corrected renders, with the provenance band
 assets/old/                    earlier renders, kept for comparison
 assets/video/                  turntables, mp4 with gif fallback
+pipeline/render_volume.py      the volume ray marcher (aspect-corrected)
+pipeline/read_volume_mat.py    reads volume.mat directly, MATLAB v5 container
+pipeline/add_provenance_band.py  burns the provenance band onto a render
+pipeline/reencode_video.py     re-encodes the turntables for compatibility
 ```
+
+The MATLAB stages (`s_sec3.m`, `s_sec4_gpu.m`, `s_sec45_classify.m`, `s_sec56.m`) live with the
+server run rather than here; the commands are in the section above.
 
 ## Credits
 

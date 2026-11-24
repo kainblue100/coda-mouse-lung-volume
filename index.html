@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CODA mouse lung: 150 serial sections to a 3D volume</title>
-<meta name="description" content="The CODA histology pipeline run end to end on 150 serial sections of a mouse lung, and the rendering bug that made it look like a stack of plates.">
+<title>CODA 小鼠肺：150 张连续切片重建为一个三维体</title>
+<meta name="description" content="把 CODA 组织学流程完整跑在 150 张小鼠肺连续切片上，以及那个让它看起来像一叠盘子的渲染 bug。">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,13 +34,15 @@
   --ok:#4bbd7a;
   --warn:#e0a13c;
 
-  --measure:66ch;
+  --measure:44em;
   --gap-1:4px;
   --gap-4:16px;
   --gap-9:36px;
   --radius:3px;
 
-  --font-sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-sans:"IBM Plex Sans","PingFang SC","Hiragino Sans GB","Microsoft YaHei",
+              "Source Han Sans SC","Noto Sans SC",ui-sans-serif,system-ui,
+              -apple-system,"Segoe UI",sans-serif;
   --font-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 
@@ -52,8 +54,8 @@ body{
   color:var(--text-100);
   font-family:var(--font-sans);
   font-size:17px;
-  line-height:1.6;
-  letter-spacing:.006em;      /* light-on-dark reads thinner */
+  line-height:1.75;
+  letter-spacing:.01em;      /* light-on-dark reads thinner */
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
 }
@@ -61,7 +63,7 @@ body{
 
 img,video{display:block;max-width:100%;height:auto}
 a{color:inherit}
-h1,h2,h3{margin:0;line-height:1.18;font-weight:600;letter-spacing:-.018em}
+h1,h2,h3{margin:0;line-height:1.32;font-weight:600;letter-spacing:.01em}
 p{margin:0}
 code,kbd,samp{font-family:var(--font-mono);font-size:.9em}
 
@@ -98,14 +100,13 @@ code,kbd,samp{font-family:var(--font-mono);font-size:.9em}
 .eyebrow{
   font-family:var(--font-mono);
   font-size:.75rem;
-  text-transform:uppercase;
   letter-spacing:.16em;
   color:var(--vessel);
   margin-bottom:var(--gap-4);
 }
 h1{
-  font-size:clamp(2rem,6vw,3.6rem);
-  max-width:20ch;
+  font-size:clamp(1.85rem,5.4vw,3.3rem);
+  max-width:17em;
 }
 h1 em{
   font-style:normal;
@@ -114,9 +115,9 @@ h1 em{
 .lede{
   margin-top:var(--gap-4);
   max-width:var(--measure);
-  font-size:clamp(1.05rem,2.1vw,1.25rem);
+  font-size:clamp(1.02rem,2vw,1.18rem);
   color:var(--text-300);
-  line-height:1.55;
+  line-height:1.7;
 }
 .lede strong{color:var(--text-100);font-weight:600}
 
@@ -132,7 +133,7 @@ h1 em{
 .fact{background:var(--ink-800);padding:var(--gap-4) 18px}
 .fact dt{
   font-family:var(--font-mono);
-  font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.7rem;letter-spacing:.12em;
   color:var(--text-500);
 }
 .fact dd{
@@ -153,11 +154,11 @@ section:last-of-type{border-bottom:0}
 .sec-head{margin-bottom:clamp(28px,4vw,44px)}
 .sec-num{
   font-family:var(--font-mono);
-  font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  font-size:.72rem;letter-spacing:.14em;
   color:var(--text-500);
   display:block;margin-bottom:10px;
 }
-h2{font-size:clamp(1.45rem,3.4vw,2.05rem);max-width:26ch}
+h2{font-size:clamp(1.35rem,3.1vw,1.95rem);max-width:22em}
 .sec-head p{margin-top:var(--gap-4);max-width:var(--measure);color:var(--text-300)}
 
 /* ---------------------------------------------------------------- pipeline */
@@ -170,13 +171,13 @@ h2{font-size:clamp(1.45rem,3.4vw,2.05rem);max-width:26ch}
   border-bottom:1px solid var(--ink-600);
 }
 @media (min-width:820px){
-  .stage{grid-template-columns:210px 1fr 150px;gap:var(--gap-9);align-items:baseline}
+  .stage{grid-template-columns:230px 1fr 160px;gap:var(--gap-9);align-items:baseline}
 }
 .stage__id{font-family:var(--font-mono);font-size:.9rem;color:var(--vessel)}
-.stage__id b{display:block;color:var(--text-100);font-weight:600;letter-spacing:-.01em}
+.stage__id b{display:block;color:var(--text-100);font-weight:600;letter-spacing:.01em}
 .stage__id span{color:var(--text-500);font-size:.8rem}
 .stage__body h3{font-size:1.02rem;margin-bottom:6px}
-.stage__body p{color:var(--text-300);font-size:.96rem;max-width:60ch}
+.stage__body p{color:var(--text-300);font-size:.95rem;max-width:44em}
 .stage__meta{
   font-family:var(--font-mono);font-size:.82rem;
   color:var(--text-500);font-variant-numeric:tabular-nums;
@@ -203,7 +204,7 @@ figure{margin:0}
 }
 .shot img{width:100%;height:auto;background:#000;display:block}
 figcaption{
-  margin-top:10px;font-size:.88rem;color:var(--text-500);line-height:1.45;
+  margin-top:10px;font-size:.87rem;color:var(--text-500);line-height:1.6;
 }
 figcaption b{color:var(--text-300);font-weight:600;display:block;font-family:var(--font-mono);font-size:.82rem}
 
@@ -230,7 +231,7 @@ figcaption b{color:var(--text-300);font-weight:600;display:block;font-family:var
 .pane__tag{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   padding:12px 16px;font-family:var(--font-mono);font-size:.76rem;
-  letter-spacing:.1em;text-transform:uppercase;
+  letter-spacing:.1em;
   border-bottom:1px solid var(--ink-600);
 }
 .pane__tag--old{color:var(--text-500)}
@@ -261,7 +262,7 @@ figcaption b{color:var(--text-300);font-weight:600;display:block;font-family:var
 @media (min-width:760px){ .bug--lead{grid-column:1 / -1} }
 .tag{
   display:inline-block;font-family:var(--font-mono);font-size:.72rem;
-  letter-spacing:.08em;text-transform:uppercase;
+  letter-spacing:.08em;
   color:var(--airway);border:1px solid var(--airway-dim);
   padding:1px 7px;margin-bottom:10px;
 }
@@ -272,13 +273,13 @@ table{border-collapse:collapse;width:100%;min-width:520px;font-variant-numeric:t
 caption{
   caption-side:top;text-align:left;padding:14px 16px;
   font-family:var(--font-mono);font-size:.78rem;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--text-500);
+  color:var(--text-500);
   border-bottom:1px solid var(--ink-600);
 }
 th,td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--ink-700);font-size:.92rem}
 th{
   font-family:var(--font-mono);font-weight:500;font-size:.76rem;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--text-500);
+  letter-spacing:.09em;color:var(--text-500);
   white-space:nowrap;
 }
 td.num{text-align:right;font-family:var(--font-mono);font-size:.88rem}
@@ -318,7 +319,7 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
   background:var(--ink-800);border:1px solid var(--ink-600);
   padding:20px;overflow-x:auto;
 }
-.repro pre{margin:0;font-family:var(--font-mono);font-size:.82rem;line-height:1.75;color:var(--text-300)}
+.repro pre{margin:0;font-family:var(--font-mono);font-size:.82rem;line-height:1.85;color:var(--text-300)}
 .repro .c{color:var(--text-700)}
 .repro .k{color:var(--airway)}
 .foot-note{
@@ -349,26 +350,25 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 </head>
 
 <body>
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#main">跳到正文</a>
 
 <header class="masthead">
   <div class="wrap">
-    <p class="eyebrow">CODA pipeline / mouse lung</p>
-    <h1>150 serial sections, reconstructed into a <em>3D label volume</em></h1>
+    <p class="eyebrow">CODA 流程 / 小鼠肺</p>
+    <h1>150 张连续切片，重建为一个<em>三维标记体</em></h1>
     <p class="lede">
-      The original CODA histology pipeline, run end to end on every section of the mouse lung
-      dataset. Nothing here is synthetic: each voxel is the classifier's output on a real
-      section. The second half of this page covers a rendering bug that made the result look
-      like a <strong>stack of plates</strong>, and what it took to fix.
+      把原始 CODA 组织学流程完整跑在这套小鼠肺数据的每一张切片上。这里没有合成的东西：
+      每个体素都是分类器在真实切片上的输出。页面后半部分讲一个渲染 bug ——
+      它让结果看起来像<strong>一叠盘子</strong>，以及修好它需要做哪些事。
     </p>
 
     <dl class="facts">
-      <div class="fact"><dt>sections</dt><dd>150 <span>x 10 µm</span></dd></div>
-      <div class="fact"><dt>volume grid</dt><dd>2983 × 2497 × 150</dd></div>
-      <div class="fact"><dt>voxels</dt><dd>1.117 <span>billion</span></dd></div>
-      <div class="fact"><dt>physical size</dt><dd>11.93 × 9.99 × 1.50 <span>mm</span></dd></div>
-      <div class="fact"><dt>volume</dt><dd>0.179 <span>cm³</span></dd></div>
-      <div class="fact"><dt>of a mouse lung</dt><dd>13.8 <span>%</span></dd></div>
+      <div class="fact"><dt>切片</dt><dd>150 <span>× 10 µm</span></dd></div>
+      <div class="fact"><dt>体数据网格</dt><dd>2983 × 2497 × 150</dd></div>
+      <div class="fact"><dt>体素数</dt><dd>11.17 <span>亿</span></dd></div>
+      <div class="fact"><dt>物理尺寸</dt><dd>11.93 × 9.99 × 1.50 <span>mm</span></dd></div>
+      <div class="fact"><dt>体积</dt><dd>0.179 <span>cm³</span></dd></div>
+      <div class="fact"><dt>占小鼠肺</dt><dd>13.8 <span>%</span></dd></div>
     </dl>
   </div>
 </header>
@@ -379,90 +379,87 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 <section aria-labelledby="s-pipeline">
   <div class="wrap">
     <div class="sec-head" data-reveal>
-      <span class="sec-num">01 / pipeline</span>
-      <h2>Five stages, run in order on the GPU server</h2>
+      <span class="sec-num">01 · 流程</span>
+      <h2>五个阶段，按顺序在 GPU 服务器上跑完</h2>
       <p>
-        Parameters are the tutorial's own throughout. Section 4 trains on the annotation set,
-        4.5 applies that model to every slice, and 5 and 6 warp the result into a shared
-        coordinate frame and stack it into a volume.
+        参数完全沿用教程自带的那一套。第 4 节在标注集上训练，4.5 把那个模型应用到每一张
+        切片，第 5、6 节把结果变换到统一坐标系并堆叠成体数据。
       </p>
     </div>
 
     <ol class="stages" data-reveal>
       <li class="stage">
-        <div class="stage__id"><b>Section 3</b><span>tissue masks + registration</span></div>
+        <div class="stage__id"><b>第 3 节</b><span>组织掩膜 + 配准</span></div>
         <div class="stage__body">
-          <h3>Segmentation of tissue and pairwise alignment</h3>
+          <h3>组织分割与逐对对齐</h3>
           <p>
-            One tissue mask per section, then a global affine plus an elastic warp between
-            every consecutive pair so the stack is physically coherent before anything is
-            classified.
+            每张切片得到一张组织掩膜，然后在每一对相邻切片之间做一次全局仿射加一次弹性
+            形变，让整叠在分类之前就已经在物理上连贯。
           </p>
         </div>
         <div class="stage__meta">
-          <span class="badge badge--done">done</span><br>
-          150 masks<br>150 warps + 150 fields
+          <span class="badge badge--done">完成</span><br>
+          150 张掩膜<br>150 个变换 + 150 个形变场
         </div>
       </li>
 
       <li class="stage">
-        <div class="stage__id"><b>Section 4</b><span>train the classifier</span></div>
+        <div class="stage__id"><b>第 4 节</b><span>训练分类器</span></div>
         <div class="stage__body">
-          <h3>DeepLabv3+ / ResNet-50, 8 epochs</h3>
+          <h3>DeepLabv3+ / ResNet-50，8 个 epoch</h3>
           <p>
-            Trained on 1500 tiles cut from 5 annotated sections, on the raw class counts as
-            sample weights. Learning rate 0.0005 decaying by 0.75 each epoch. Final validation
-            loss 0.02596.
+            在 5 张有标注的切片上切出 1500 个图块训练，用原始类别计数做样本权重。
+            学习率 0.0005，每个 epoch 乘 0.75。最终验证损失 0.02596。
           </p>
         </div>
         <div class="stage__meta">
-          <span class="badge badge--done">done</span><br>
-          1.14 s / iteration<br>on GPU
+          <span class="badge badge--done">完成</span><br>
+          1.14 秒 / 迭代<br>在 GPU 上
         </div>
       </li>
 
       <li class="stage">
-        <div class="stage__id"><b>Section 4.5</b><span>apply to all 150</span></div>
+        <div class="stage__id"><b>第 4.5 节</b><span>应用到全部 150 张</span></div>
         <div class="stage__body">
-          <h3>Classify every slice at full resolution</h3>
+          <h3>在原始分辨率下分类每一张切片</h3>
           <p>
-            Each 9330 × 9950 image is tiled at 1000 px and run through the network, with tiles
-            that contain no tissue skipped before inference.
+            每张 9330 × 9950 的图按 1000 px 切块后送入网络，不含任何组织的图块在推理前
+            就被跳过。
           </p>
         </div>
         <div class="stage__meta">
-          <span class="badge badge--done">done</span><br>
-          87 min total<br>≈ 30 s per slice
+          <span class="badge badge--done">完成</span><br>
+          共 87 分钟<br>约 30 秒一张
         </div>
       </li>
 
       <li class="stage">
-        <div class="stage__id"><b>Section 5</b><span>warp to a shared frame</span></div>
+        <div class="stage__id"><b>第 5 节</b><span>变形到统一坐标系</span></div>
         <div class="stage__body">
-          <h3>Apply the Section 3 warps to the classified images</h3>
+          <h3>把第 3 节的变换作用到分类结果上</h3>
           <p>
-            The section-to-section transforms were computed on the low resolution images, so
-            they are scaled up by 10 and applied to the 1 µm classified output.
+            切片之间的变换是在低分辨率图上算出来的，所以放大 10 倍之后应用到 1 µm 的
+            分类输出上。
           </p>
         </div>
         <div class="stage__meta">
-          <span class="badge badge--done">done</span><br>
-          150 / 150<br>≈ 7 s per image
+          <span class="badge badge--done">完成</span><br>
+          150 / 150<br>约 7 秒一张
         </div>
       </li>
 
       <li class="stage">
-        <div class="stage__id"><b>Section 6</b><span>build the volume</span></div>
+        <div class="stage__id"><b>第 6 节</b><span>构建体数据</span></div>
         <div class="stage__body">
-          <h3>Downsample and stack into a label volume</h3>
+          <h3>降采样并堆叠成标记体</h3>
           <p>
-            In-plane downsampling of 4 gives 4 µm pixels; the section spacing stays at 10 µm,
-            so the finished voxel is 4 × 4 × 10 µm. The stack is cropped to the tissue.
+            面内降采样 4 倍得到 4 µm 像素；切片间距仍是 10 µm，所以最终体素是
+            4 × 4 × 10 µm。堆叠结果再裁剪到组织范围内。
           </p>
         </div>
         <div class="stage__meta">
-          <span class="badge badge--done">done</span><br>
-          59 MB volume.mat<br>7 classes
+          <span class="badge badge--done">完成</span><br>
+          59 MB volume.mat<br>7 个类别
         </div>
       </li>
     </ol>
@@ -473,32 +470,32 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 <section aria-labelledby="s-results">
   <div class="wrap">
     <div class="sec-head" data-reveal>
-      <span class="sec-num">02 / result</span>
-      <h2>The corrected reconstruction</h2>
+      <span class="sec-num">02 · 结果</span>
+      <h2>修正之后的那个重建</h2>
       <p>
-        Volume ray marching, emission and absorption, parallel projection. The colours are the
-        classifier's own class palette: <span style="color:var(--vessel)">magenta is
-        vasculature</span>, <span style="color:var(--airway)">amber is bronchioles</span>, and
-        the pale blue haze is alveolar parenchyma.
+        体数据光线步进、发射与吸收模型、平行投影。颜色用的是分类器自己的类别配色：
+        <span style="color:var(--vessel)">洋红是血管</span>、
+        <span style="color:var(--airway)">琥珀是细支气管</span>，
+        淡蓝色的雾状部分是肺泡实质。
       </p>
     </div>
 
     <div class="gallery" data-reveal>
       <figure>
-        <div class="shot"><img src="assets/new/hero.png" alt="Three-quarter view of the reconstructed mouse lung volume, showing a magenta vessel tree and an amber airway tree inside a translucent blue-grey parenchyma. A provenance band below the render states that all classes come from the 150 real sections." loading="lazy" width="1000" height="1434"></div>
-        <figcaption><b>hero</b>Three-quarter view. Both trees visible against the parenchyma.</figcaption>
+        <div class="shot"><img src="assets/new/hero.png" alt="重建出的小鼠肺体数据的三分之四视角，半透明的蓝灰色实质里能看到洋红的血管树和琥珀的支气管树。渲染图下方有一条来源说明带，声明所有类别都来自 150 张真实切片。" loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>hero</b>三分之四视角。两棵树都能在实质背景下看清。</figcaption>
       </figure>
       <figure>
-        <div class="shot"><img src="assets/new/oblique.png" alt="Raised oblique view of the same volume, with the provenance band below." loading="lazy" width="1000" height="1434"></div>
-        <figcaption><b>oblique</b>Raised oblique, full footprint in frame.</figcaption>
+        <div class="shot"><img src="assets/new/oblique.png" alt="同一体数据的抬高斜视角，下方带来源说明带。" loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>oblique</b>抬高斜视，完整占地范围入画。</figcaption>
       </figure>
       <figure>
-        <div class="shot"><img src="assets/new/front.png" alt="Frontal view of the volume, with the provenance band below." loading="lazy" width="1000" height="1434"></div>
-        <figcaption><b>front</b>Frontal.</figcaption>
+        <div class="shot"><img src="assets/new/front.png" alt="体数据的正视视角，下方带来源说明带。" loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>front</b>正视。</figcaption>
       </figure>
       <figure>
-        <div class="shot"><img src="assets/new/top.png" alt="View looking down onto the stack of sections, with the provenance band below." loading="lazy" width="1000" height="1434"></div>
-        <figcaption><b>top</b>Looking down onto the section stack.</figcaption>
+        <div class="shot"><img src="assets/new/top.png" alt="沿着切片堆叠方向往下看的视角，下方带来源说明带。" loading="lazy" width="1000" height="1434"></div>
+        <figcaption><b>top</b>俯视切片堆叠。</figcaption>
       </figure>
     </div>
 
@@ -506,15 +503,15 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
       <div class="videobox">
         <video controls muted loop playsinline preload="metadata"
                poster="assets/new/hero.png"
-               aria-label="Turntable of the reconstructed mouse lung volume">
+               aria-label="重建出的小鼠肺体数据的转盘动画">
           <source src="assets/video/new-turntable.mp4" type="video/mp4">
-          Your browser cannot play this video.
-          <a href="assets/video/new-turntable.gif">Open the animated GIF instead</a>.
+          你的浏览器无法播放这段视频。
+          <a href="assets/video/new-turntable.gif">改用动态 GIF</a>。
         </video>
       </div>
       <p class="videofall">
-        <span>40 frames, 20 fps, one full rotation</span>
-        <span><a href="assets/video/new-turntable.gif">GIF fallback</a> · <a href="assets/video/new-turntable.mp4" download>Download MP4</a></span>
+        <span>40 帧，20 fps，完整转一圈</span>
+        <span><a href="assets/video/new-turntable.gif">GIF 备用</a> · <a href="assets/video/new-turntable.mp4" download>下载 MP4</a></span>
       </p>
     </div>
   </div>
@@ -524,98 +521,95 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 <section aria-labelledby="s-prov">
   <div class="wrap">
     <div class="sec-head" data-reveal>
-      <span class="sec-num">03 / provenance</span>
-      <h2>What in those images comes from the slice data</h2>
+      <span class="sec-num">03 · 来源</span>
+      <h2>这些图里哪些东西来自切片数据</h2>
       <p>
-        Everything in the render is classifier output on the real sections. That is not obvious
-        from looking at it, and two things that are <em>not</em> measurements can easily be read
-        as if they were. The table separates the three cases.
+        渲染图里的一切都是分类器在真实切片上的输出。这一点从画面上看不出来，而有两样
+        东西<em>不是</em>测量值，却很容易被当成测量值来读。下表把三种情况分开。
       </p>
     </div>
 
     <div class="tblwrap" data-reveal>
       <table>
-        <caption>Provenance of every element in the 3D result</caption>
+        <caption>三维结果中每一个元素的来源</caption>
         <thead>
           <tr>
-            <th scope="col">Element in the render</th>
-            <th scope="col">Where it comes from</th>
-            <th scope="col">Status</th>
+            <th scope="col">渲染中的元素</th>
+            <th scope="col">来自哪里</th>
+            <th scope="col">性质</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Vasculature, magenta</td>
-            <td>Class 3, classifier output on the 150 sections</td>
-            <td><span class="badge badge--done">data</span></td>
+            <td>血管，洋红</td>
+            <td>第 3 类，分类器在 150 张切片上的输出</td>
+            <td><span class="badge badge--done">数据</span></td>
           </tr>
           <tr>
-            <td>Bronchioles, amber</td>
-            <td>Class 1, same source</td>
-            <td><span class="badge badge--done">data</span></td>
+            <td>细支气管，琥珀</td>
+            <td>第 1 类，同一来源</td>
+            <td><span class="badge badge--done">数据</span></td>
           </tr>
           <tr>
-            <td>Alveoli, stroma, nonexpanded, cancer, background</td>
-            <td>Classes 2, 7, 5, 4, 6</td>
-            <td><span class="badge badge--done">data</span></td>
+            <td>肺泡、间质、未扩张、肿瘤、背景</td>
+            <td>第 2、7、5、4、6 类</td>
+            <td><span class="badge badge--done">数据</span></td>
           </tr>
           <tr>
-            <td>Outer silhouette</td>
-            <td>The tissue mask of each individual section</td>
-            <td><span class="badge badge--done">data</span></td>
+            <td>外轮廓</td>
+            <td>每一张切片各自的组织掩膜</td>
+            <td><span class="badge badge--done">数据</span></td>
           </tr>
           <tr>
-            <td>1.5 mm thickness</td>
-            <td>150 sections at their real 10 µm spacing</td>
-            <td><span class="badge badge--done">data</span></td>
+            <td>1.5 mm 厚度</td>
+            <td>150 张切片按真实的 10 µm 间距堆叠</td>
+            <td><span class="badge badge--done">数据</span></td>
           </tr>
           <tr class="is-emph">
-            <td>Apparent calibre of vessels and airways</td>
-            <td>Widened by the renderer's emission. The labelled structures are 1 to 2 voxels thick in the data, so the rendered width is not a diameter</td>
-            <td><span class="badge">presentation</span></td>
+            <td>血管与支气管看起来的管径</td>
+            <td>被渲染器的发射项加宽了。数据里被标记的结构只有 1 到 2 个体素厚，
+                所以渲染出来的宽度不是直径</td>
+            <td><span class="badge">呈现</span></td>
           </tr>
           <tr>
-            <td>Colour, glow strength, opacity</td>
-            <td>Display parameters chosen by hand</td>
-            <td><span class="badge">presentation</span></td>
+            <td>颜色、辉光强度、不透明度</td>
+            <td>手工挑选的显示参数</td>
+            <td><span class="badge">呈现</span></td>
           </tr>
           <tr class="is-emph">
-            <td>590,000 removed voxels</td>
-            <td>Despeckle filter on isolated components below 250 voxels</td>
-            <td><span class="badge">processing</span></td>
+            <td>被移除的 59 万个体素</td>
+            <td>对小于 250 体素的孤立连通域做去斑</td>
+            <td><span class="badge">处理</span></td>
           </tr>
           <tr>
-            <td>12 µm in-plane grid</td>
-            <td>Display resampling, smoother than the raw 4 µm grid</td>
-            <td><span class="badge">processing</span></td>
+            <td>12 µm 面内网格</td>
+            <td>显示重采样，比原始的 4 µm 网格更平滑</td>
+            <td><span class="badge">处理</span></td>
           </tr>
           <tr>
-            <td>Anatomy that is not the specimen</td>
-            <td>No reference anatomy and no other animal appears in any render on this page</td>
-            <td><span class="badge badge--done">excluded</span></td>
+            <td>不属于这份标本的解剖结构</td>
+            <td>本页任何一张渲染图里都没有参考解剖，也没有别的动物</td>
+            <td><span class="badge badge--done">已排除</span></td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <div class="callout" style="margin-top:var(--gap-9)" data-reveal>
-      <h3>Deliberately kept out</h3>
+      <h3>刻意不用进来的东西</h3>
       <p>
-        Three assets in this project are not the specimen and would be misleading inside a
-        reconstruction. They exist, they are useful for other purposes, and none of them is
-        used above.
+        这个项目里有三份资产不是这份标本，放进重建里会造成误导。它们确实存在，对别的用途
+        也有用，但上面没有一处用到。
       </p>
       <p>
-        <code>LUNG_anatomical.glb</code> is a human lung from the BodyParts3D atlas, which is
-        the wrong species. <code>MOUSE_lung.glb</code> is a set of procedural lobes built from
-        sphere primitives, so the shape is invented rather than imaged.
-        <code>lapd_m07/</code> is the lapdMouse archive of a different mouse, a C57BL/6 male of
-        24.1 g, with its own airway tree, and it can be compared against this reconstruction but
-        not merged into it.
+        <code>LUNG_anatomical.glb</code> 是 BodyParts3D 图谱里的人类肺 —— 物种不对。
+        <code>MOUSE_lung.glb</code> 是用球体图元拼出来的程序化肺叶，形状是编的而不是
+        成像来的。<code>lapd_m07/</code> 是 lapdMouse 里另一只小鼠（C57BL/6 雄性、
+        24.1 g）的档案，带着它自己的支气管树，可以与这个重建做比较，但不能混进去。
       </p>
       <p>
-        If any of those ever appear in a figure beside this volume, they need a label saying
-        which one is the measurement and which is a reference.
+        这些如果有任何一份将来出现在这张体数据旁边的图里，都必须标注清楚哪个是测量、
+        哪个是参考。
       </p>
     </div>
   </div>
@@ -625,36 +619,35 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 <section aria-labelledby="s-compare">
   <div class="wrap">
     <div class="sec-head" data-reveal>
-      <span class="sec-num">04 / old vs new</span>
-      <h2>Same data, same classifier. One number was wrong</h2>
+      <span class="sec-num">04 · 旧与新的对比</span>
+      <h2>同样的数据，同样的分类器。有一个数字是错的</h2>
       <p>
-        Both of these are the identical 1.117 billion voxel volume. The only difference is how
-        the renderer mapped it into space. On the left, z is stretched about eight times; on the
-        right, each axis carries its real physical extent.
+        这两张是同一个 11.17 亿体素的体数据。唯一的差别是渲染器把它映射进空间的方式。
+        左边 z 被拉伸了大约八倍；右边每个轴都保持真实的物理尺度。
       </p>
     </div>
 
     <div class="compare" data-reveal>
       <div class="pane">
         <div class="pane__tag">
-          <span class="pane__tag--old">Before</span>
-          <span class="score score--old">smoothness <b>4</b>/10</span>
+          <span class="pane__tag--old">修正前</span>
+          <span class="score score--old">平滑度 <b>4</b>/10</span>
         </div>
-        <img src="assets/old/hero.png" alt="Earlier render with visible horizontal plate stacking across the tissue surface." loading="lazy" width="1000" height="1000">
+        <img src="assets/old/hero.png" alt="早期渲染，组织表面能看到明显的水平片层堆叠。" loading="lazy" width="1000" height="1000">
         <p>
-          The surface reads as a stack of horizontal plates. A 1.5 mm slab was being drawn as a
-          thick block, so the 150 sections became visible edges.
+          表面读起来像一叠水平盘子。一块 1.5 mm 的薄片被画成了厚方块，于是 150 张切片
+          变成了肉眼可见的棱边。
         </p>
       </div>
       <div class="pane">
         <div class="pane__tag">
-          <span class="pane__tag--new">After</span>
-          <span class="score score--new">smoothness <b>8</b>/10</span>
+          <span class="pane__tag--new">修正后</span>
+          <span class="score score--new">平滑度 <b>8</b>/10</span>
         </div>
-        <img src="assets/new/hero.png" alt="Corrected render with a continuous translucent surface and clearly separated vessel and airway trees, and the provenance band below." loading="lazy" width="1000" height="1434">
+        <img src="assets/new/hero.png" alt="修正后的渲染，表面连续半透明，血管树与支气管树清晰分开，下方带来源说明带。" loading="lazy" width="1000" height="1434">
         <p>
-          Continuous surface, no stacking lines, and the branches read as tubes rather than
-          frayed sheets. Vessel and airway trees separate cleanly by colour.
+          表面连续、没有堆叠线，分支读起来是管子而不是散开的薄片。血管树和支气管树按
+          颜色干净地分开。
         </p>
       </div>
     </div>
@@ -662,12 +655,12 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
     <div class="reel" data-reveal>
       <div class="compare">
         <div class="pane">
-          <div class="pane__tag"><span class="pane__tag--old">Before, turning</span></div>
-          <img src="assets/video/old-turntable.gif" alt="Turntable of the earlier, incorrectly scaled render." loading="lazy">
+          <div class="pane__tag"><span class="pane__tag--old">修正前，转动</span></div>
+          <img src="assets/video/old-turntable.gif" alt="早期错误缩放渲染的转盘动画。" loading="lazy">
         </div>
         <div class="pane">
-          <div class="pane__tag"><span class="pane__tag--new">After, turning</span></div>
-          <img src="assets/video/new-turntable.gif" alt="Turntable of the corrected render." loading="lazy">
+          <div class="pane__tag"><span class="pane__tag--new">修正后，转动</span></div>
+          <img src="assets/video/new-turntable.gif" alt="修正后渲染的转盘动画。" loading="lazy">
         </div>
       </div>
     </div>
@@ -678,67 +671,61 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 <section aria-labelledby="s-fixes">
   <div class="wrap">
     <div class="sec-head" data-reveal>
-      <span class="sec-num">05 / what was wrong</span>
-      <h2>Five defects, in order of how much they mattered</h2>
+      <span class="sec-num">05 · 问题出在哪</span>
+      <h2>五个缺陷，按影响从大到小</h2>
       <p>
-        Only the first one is what people noticed. The rest were each contributing their own
-        artefact on top of it.
+        只有第一个是大家一眼看出来的。其余每一个都在它之上各自贡献了一份伪影。
       </p>
     </div>
 
     <ul class="bugs" data-reveal>
       <li class="bug bug--lead">
-        <span class="tag">the dominant one</span>
+        <span class="tag">主因</span>
         <span class="bug__n">01</span>
-        <h3>The aspect ratio was destroyed by normalisation</h3>
+        <h3>长宽比被归一化毁掉了</h3>
         <p>
-          The volume is 11.93 × 9.99 × 1.50 mm, but the renderer mapped each axis onto
-          [-0.5, 0.5] independently. That stretches z by roughly eight times and turns a thin
-          slab into a block, which is exactly why the sections showed up as plates.
+          体数据是 11.93 × 9.99 × 1.50 mm，但渲染器把每个轴各自映射到 [-0.5, 0.5]。
+          这会把 z 拉伸大约八倍，把一块薄片变成一个方块 —— 这正是切片显示成一叠盘子的
+          原因。
         </p>
         <p>
-          The fix is to scale every axis by its share of the largest physical dimension before
-          converting back to voxel indices.
+          修法是：在转换回体素索引之前，先让每个轴按它占最大物理尺寸的比例缩放。
         </p>
       </li>
 
       <li class="bug">
         <span class="bug__n">02</span>
-        <h3>The camera was inside the volume</h3>
+        <h3>相机在体数据内部</h3>
         <p>
-          Building the ray direction by normalising a per-pixel vector makes every ray diverge
-          from the origin, which sits inside the data. The first render was a starburst of
-          spokes converging on the centre.
+          用逐像素向量归一化来构造光线方向，会让每条光线都从原点发散，而原点就在数据
+          内部。第一版渲染出来是一个所有辐条都汇聚到中心的星芒。
         </p>
       </li>
 
       <li class="bug">
         <span class="bug__n">03</span>
-        <h3>In-plane sampling was coarser than z</h3>
+        <h3>面内采样比 z 更粗</h3>
         <p>
-          An early version downsampled xy four times to 16 µm while resampling z to 4 µm. That
-          is anisotropy in the opposite direction to the data's own, and it made the lateral
-          detail visibly worse than claimed.
+          早期版本把 xy 降采样四倍到 16 µm，同时把 z 重采样到 4 µm。这个各向异性的方向
+          与数据本身的相反，让侧向细节明显比声称的要差。
         </p>
       </li>
 
       <li class="bug">
         <span class="bug__n">04</span>
-        <h3>Parenchyma emission was far too high</h3>
+        <h3>实质的发射项太高</h3>
         <p>
-          A ray crosses about 700 steps, so even a small per-step value accumulates into a white
-          haze that flattens everything inside it. Emission is now near zero on the parenchyma
-          classes and absorption carries the structure instead.
+          一条光线要穿过约 700 步，所以即使单步的值很小，累积起来也会变成一层白雾，把
+          里面的一切都压平。现在实质类别的发射项接近零，改由吸收项来承载结构。
         </p>
       </li>
 
       <li class="bug">
         <span class="bug__n">05</span>
-        <h3>Single-voxel specks in the background</h3>
+        <h3>背景里的单个体素斑点</h3>
         <p>
-          The classifier scatters isolated one-voxel islands of every class through the empty
-          space. At render time those become hundreds of coloured dots floating in the black.
-          Filtering connected components below 250 voxels removed about 590,000 of them.
+          分类器会在空白区域里散落各个类别的单个体素孤岛。渲染时它们就变成几百个飘在
+          黑色背景上的彩色小点。把小于 250 体素的连通域滤掉，去掉了大约 59 万个。
         </p>
       </li>
     </ul>
@@ -749,58 +736,58 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 <section aria-labelledby="s-table">
   <div class="wrap">
     <div class="sec-head" data-reveal>
-      <span class="sec-num">06 / composition</span>
-      <h2>What the volume is made of</h2>
+      <span class="sec-num">06 · 组成</span>
+      <h2>这个体数据是由什么构成的</h2>
       <p>
-        Per-class voxel counts, converted with the true voxel volume
-        <code>0.004 × 0.004 × 0.010 mm³</code>.
+        各类别的体素计数，用真实的体素体积
+        <code>0.004 × 0.004 × 0.010 mm³</code> 换算。
       </p>
     </div>
 
     <div class="tblwrap" data-reveal>
       <table>
-        <caption>Class composition of the 150-section volume</caption>
+        <caption>150 张切片体数据的类别组成</caption>
         <thead>
           <tr>
-            <th scope="col">Class</th>
-            <th scope="col" class="num">Voxels</th>
-            <th scope="col" class="num">Volume mm³</th>
-            <th scope="col" class="num">Share</th>
+            <th scope="col">类别</th>
+            <th scope="col" class="num">体素数</th>
+            <th scope="col" class="num">体积 mm³</th>
+            <th scope="col" class="num">占比</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><span class="swatch" style="background:var(--parenchyma)"></span>Alveoli</td>
+            <td><span class="swatch" style="background:var(--parenchyma)"></span>肺泡</td>
             <td class="num">115,941,596</td><td class="num">18.551</td><td class="num">10.4 %</td>
           </tr>
           <tr class="is-emph">
-            <td><span class="swatch" style="background:var(--vessel)"></span>Vasculature</td>
+            <td><span class="swatch" style="background:var(--vessel)"></span>血管</td>
             <td class="num">1,424,078</td><td class="num">0.228</td><td class="num">0.13 %</td>
           </tr>
           <tr class="is-emph">
-            <td><span class="swatch" style="background:var(--airway)"></span>Bronchioles</td>
+            <td><span class="swatch" style="background:var(--airway)"></span>细支气管</td>
             <td class="num">2,088,352</td><td class="num">0.334</td><td class="num">0.19 %</td>
           </tr>
           <tr>
-            <td><span class="swatch" style="background:#c4aa3c"></span>Stroma</td>
+            <td><span class="swatch" style="background:#c4aa3c"></span>间质</td>
             <td class="num">9,317,596</td><td class="num">1.491</td><td class="num">0.83 %</td>
           </tr>
           <tr>
-            <td><span class="swatch" style="background:#2a9aa0"></span>Nonexpanded</td>
+            <td><span class="swatch" style="background:#2a9aa0"></span>未扩张</td>
             <td class="num">8,122,270</td><td class="num">1.300</td><td class="num">0.73 %</td>
           </tr>
           <tr>
-            <td><span class="swatch" style="background:#c2c293"></span>Cancer</td>
+            <td><span class="swatch" style="background:#c2c293"></span>肿瘤</td>
             <td class="num">141,801</td><td class="num">0.023</td><td class="num">0.013 %</td>
           </tr>
           <tr>
-            <td><span class="swatch" style="background:var(--ink-500)"></span>Background</td>
+            <td><span class="swatch" style="background:var(--ink-500)"></span>背景</td>
             <td class="num">980,246,957</td><td class="num">156.840</td><td class="num">87.7 %</td>
           </tr>
         </tbody>
         <tfoot>
           <tr>
-            <td>Total</td>
+            <td>合计</td>
             <td class="num">1,117,282,650</td><td class="num">178.766</td><td class="num">100 %</td>
           </tr>
         </tfoot>
@@ -813,26 +800,25 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 <section aria-labelledby="s-limits">
   <div class="wrap">
     <div class="sec-head" data-reveal>
-      <span class="sec-num">07 / the honest part</span>
-      <h2>This is a slab, not a whole lung</h2>
+      <span class="sec-num">07 · 需要说清楚的部分</span>
+      <h2>这是一块薄片，不是整个肺</h2>
     </div>
 
     <div class="callout" data-reveal>
-      <h3>1.5 mm of tissue out of a 10 to 20 mm organ</h3>
+      <h3>一个 10 到 20 mm 的器官里，只有 1.5 mm 的组织</h3>
       <p>
-        150 sections at 10 µm spacing is 1.5 mm of tissue. A mouse lung is roughly 10 to 20 mm
-        long and about 1.3 cm³ in volume, so this stack samples close to 14 % of the organ. That
-        is a real and representative block, but it is not the whole shape.
+        150 张切片按 10 µm 间距算，是 1.5 mm 厚的组织。小鼠肺长约 10 到 20 mm、体积约
+        1.3 cm³，所以这叠只采到了器官的接近 14 %。它是一块真实且有代表性的组织块，但
+        不是整个形状。
       </p>
       <p>
-        The consequence is visible in every render: the result reads as a tissue block with a
-        bronchovascular tree inside it, rather than as an anatomically recognisable lung. A
-        whole-lung silhouette would need several hundred more sections. This is a property of
-        the dataset, not of the pipeline.
+        后果在每一张渲染图上都看得见：结果读起来是一块组织，里面有一套支气管血管树，
+        而不是一个解剖学上认得出的肺。要拿到完整肺的轮廓，还需要好几百张切片。这是数据
+        集的性质，不是流程的问题。
       </p>
-      <div class="bar" role="img" aria-label="Bar showing the reconstruction covers 13.8 percent of a mouse lung by volume.">
+      <div class="bar" role="img" aria-label="进度条显示这次重建按体积计覆盖了小鼠肺的 13.8%。">
         <div class="bar__fill"></div>
-        <div class="bar__label">13.8 % of the organ</div>
+        <div class="bar__label">占器官的 13.8 %</div>
       </div>
     </div>
   </div>
@@ -842,24 +828,24 @@ footer{padding:clamp(40px,6vw,72px) 0 80px;border-top:1px solid var(--ink-600)}
 
 <footer>
   <div class="wrap--narrow">
-    <h2 style="font-size:1.15rem;margin-bottom:20px" data-reveal>Reproducing this</h2>
+    <h2 style="font-size:1.15rem;margin-bottom:20px" data-reveal>复现</h2>
     <div class="repro" data-reveal>
-<pre><span class="c"># server: bzhang@10.13.8.200, coda3d_run</span>
+<pre><span class="c"># 服务器：bzhang@10.13.8.200，coda3d_run</span>
 <span class="k">export</span> CUDA_VISIBLE_DEVICES=1
 <span class="k">export</span> LD_LIBRARY_PATH=/home/bzhang/Kludt/cuda-compat-13-4:$LD_LIBRARY_PATH
 
-matlab -batch s_sec4_gpu         <span class="c"># train + test</span>
-matlab -batch s_sec45_classify   <span class="c"># classify all 150</span>
-matlab -batch s_sec56            <span class="c"># registration + volume</span></pre>
+matlab -batch s_sec4_gpu         <span class="c"># 训练 + 测试</span>
+matlab -batch s_sec45_classify   <span class="c"># 分类全部 150 张</span>
+matlab -batch s_sec56            <span class="c"># 配准 + 构建体数据</span></pre>
     </div>
     <p style="margin-top:18px;color:var(--text-300);font-size:.94rem">
-      GPU access needs no root and no reboot. The CUDA forward-compatibility userspace
-      libraries on <code>LD_LIBRARY_PATH</code> are enough for MATLAB R2026b to see the
-      RTX 4090, which cut training from 19.2 s to 1.14 s per iteration.
+      使用 GPU 不需要 root，也不需要重启。只要把 CUDA 的前向兼容用户态库放进
+      <code>LD_LIBRARY_PATH</code>，MATLAB R2026b 就能看到这块 RTX 4090，训练时间
+      因此从 19.2 秒一次迭代降到 1.14 秒。
     </p>
 
     <div class="foot-note">
-      <span>CODA: Kiemen et al., <em>Nature Methods</em> 2022</span>
+      <span>CODA：Kiemen 等，<em>Nature Methods</em> 2022</span>
       <span><a href="https://github.com/kainblue100/">github.com/kainblue100</a></span>
     </div>
   </div>
